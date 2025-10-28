@@ -24,8 +24,6 @@ async def hello(ctx):
 async def dave(ctx):
     await ctx.send("Now, Dave. I’m afraid I can’t do that.")
 
-import random
-
 @bot.command()
 async def deathsave(ctx):
     roll = random.randint(1, 20)
