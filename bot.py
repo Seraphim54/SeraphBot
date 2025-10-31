@@ -95,4 +95,28 @@ async def mothman(ctx):
     mothtwerk = "https://art.ngfiles.com/images/3435000/3435336_codingcanine_thicc-mothman.gif"
     await ctx.send(mothtwerk)
 
+# -- lets play with embeds
+
+@bot.command()
+async def glimmerfen_event(ctx):
+    channel = bot.get_channel(1406738456176099348)
+    role_id = 1406739339739926538
+    role_mention = f"<@&1406739339739926538>"
+    if channel:
+        embed = discord.Embed(
+            title="🟣 **Shadows Over Glimmerfen Session 1** 🟣",
+            description="Session 1 kicks off this week — and everything feels normal.\n*Too normal*.\nJoin us in the cozy glow of the Shadewisp Inn, where arcade contests, bard singalongs, and small-town charm set the stage. The shadows haven't started whispering yet.\n\nBut they will.\n\n 🕯️ Expect festival vibes, flickering lanterns, and your first taste of the strange.",
+            
+            color=discord.Color.dark_purple()  # Optional: adds a left border color
+        )
+        embed.set_image(url="https://files.d20.io/images/453071419/W3xZgoS3AxDljsbcoPbeDw/max.png")
+        embed.set_footer(text="Saturday Nov 1, 2025 at 7 PM CST")
+    
+        await channel.send(content=role_mention, embed=embed)
+    else:
+        await ctx.send("could not find the test channel.")
+
 bot.run(TOKEN)
+
+
+723372562255446076
