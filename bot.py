@@ -3,6 +3,7 @@ from discord.ext import commands
 import os
 from dotenv import load_dotenv
 import random
+import json
 
 
 # Loads the Bots Token from .env file
@@ -12,13 +13,58 @@ TOKEN = os.getenv("bot_token")
 # Create a bot with a prefix for commands
 bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
 
+# +----------------------+
+# |  LISTS, TUPLES, ETC  |
+# +----------------------+
+
+alignments = ("Lawful Good", "Neutral Good", "Chatoic Good", "Lawful Neutral", "True Neutral", "Chaotic Neutral", "Lawful Evil", "Neutral Evil", "Chaotic Evil")
+
+races = ("Aarakocra", "Aasimar", "Astral Elf", "Autognome", "Bugbear", "Centaur", "Changeling", "Custom Lineage", "Deep Gnome", "Dhampir", "Dragonborn", "Duergar", "Dwarf", "Eladrin", "Elf", "Fairy", "Firbolg", "Genasi", "Giff", "Githyanki", "Githzerai", "Gnome", "Goblin", "Goliath", "Grung", "Hadozee", "Half-Elf", "Half-Orc", "Halfling", "Harengon", "Hexblood", "Hobgoblin", "Human", "Kalashtar", "Kender", "Kenku", "Kobold", "Leonin", "Lizardfolk", "Locathah", "Loxodon", "Minotaur", "Orc", "Owlin", "Plasmoid", "Reborn", "Satyr", "Sea Elf", "Shadar-Kai", "Shifter", "Simic Hybrid", "Tabaxi", "Thri-kreen", "Tiefling", "Tortle", "Triton", "Vedalken", "Verdan", "Warforged", "Yuan-ti")
+
+classes = ("Artificer", "Barbarian", "Bard", "Cleric", "Druid", "Fighter", "Monk", "Paladin", "Ranger", "Rogue", "Sorcerer", "Warlock", "Wizard")
+
+disc_colors = ("default", "teal", "dark_teal", "green", "dark_green", "blue", "dark_blue", "purple", "dark_purple", "magenta", "gold", "orange", "red", "dark_red", "brand_red", "brand_green", "grey", "dark_grey", "light_grey", "navy")
+
+rand_color = random.choice(disc_colors)
+
+# +--------------------+
+# |  HELPER FUNCTIONS  |
+# +--------------------+
+
+def mention_user(ctx):
+    return ctx.author.mention
+
+async def msgdel(ctx):
+    await ctx.message.delete()
+
+def get_random_color():
+    return getattr(discord.Color, random.choice(disc_colors))()
+
+# +--------------+
+# |  BOT EVENTS  |
+# +--------------+
+
 @bot.event
 async def on_ready():
     print(f"✅ Logged in as {bot.user}")
 
+
+# +----------------+
+# |  BOT COMMANDS  |
+# +----------------+
+
 @bot.command()
 async def hello(ctx):
     await ctx.send("Hello gamer! 🎮")
+
+@bot.command()
+async def hello2(ctx):
+    await ctx.message.delete()
+    await ctx.send("Hello gamer! If this worked right then your command of `!hello2` should not be above me")
+
+@bot.command()
+async def colortest(ctx):
+    await ctx.send(f"The color choices are {disc_colors}")
 
 @bot.command()
 async def dave(ctx):
@@ -39,21 +85,14 @@ async def deathsave(ctx):
 
     await ctx.send(f"You rolled a {roll}: {result}")
 
-# -- Choice Tuples
-
-alignments = ("Lawful Good", "Neutral Good", "Chatoic Good", "Lawful Neutral", "True Neutral", "Chaotic Neutral", "Lawful Evil", "Neutral Evil", "Chaotic Evil")
-
-races = ("Aarakocra", "Aasimar", "Astral Elf", "Autognome", "Bugbear", "Centaur", "Changeling", "Custom Lineage", "Deep Gnome", "Dhampir", "Dragonborn", "Duergar", "Dwarf", "Eladrin", "Elf", "Fairy", "Firbolg", "Genasi", "Giff", "Githyanki", "Githzerai", "Gnome", "Goblin", "Goliath", "Grung", "Hadozee", "Half-Elf", "Half-Orc", "Halfling", "Harengon", "Hexblood", "Hobgoblin", "Human", "Kalashtar", "Kender", "Kenku", "Kobold", "Leonin", "Lizardfolk", "Locathah", "Loxodon", "Minotaur", "Orc", "Owlin", "Plasmoid", "Reborn", "Satyr", "Sea Elf", "Shadar-Kai", "Shifter", "Simic Hybrid", "Tabaxi", "Thri-kreen", "Tiefling", "Tortle", "Triton", "Vedalken", "Verdan", "Warforged", "Yuan-ti")
-
-classes = ("Artificer", "Barbarian", "Bard", "Cleric", "Druid", "Fighter", "Monk", "Paladin", "Ranger", "Rogue", "Sorcerer", "Warlock", "Wizard")
-
 @bot.command()
 async def random_build(ctx):
+    await msgdel(ctx)
     rand_align = random.choice(alignments)
     rand_race = random.choice(races)
     rand_class = random.choice(classes)
 
-    await ctx.send(f"🐉 Go forth and seek adventure with your shiny new {rand_align} {rand_race} {rand_class}")
+    await ctx.send(f"🐉 Go forth and seek adventure, {mention_user(ctx)}, with your shiny new {rand_align} {rand_race} {rand_class}")
 
 @bot.command()
 async def mmn(ctx):
@@ -95,13 +134,13 @@ async def mothman(ctx):
     mothtwerk = "https://art.ngfiles.com/images/3435000/3435336_codingcanine_thicc-mothman.gif"
     await ctx.send(mothtwerk)
 
-# -- lets play with embeds
+# -- lets play with direct embeds
 
 @bot.command()
 async def glimmerfen_event(ctx):
     channel = bot.get_channel(1406738456176099348)
     role_id = 1406739339739926538
-    role_mention = f"<@&1406739339739926538>"
+    role_mention = f"<@&{role_id}>"
     if channel:
         embed = discord.Embed(
             title="🟣 **Shadows Over Glimmerfen Session 1** 🟣",
@@ -116,7 +155,39 @@ async def glimmerfen_event(ctx):
     else:
         await ctx.send("could not find the test channel.")
 
+# -- testing externally loaded embed from individual json
+
+@bot.command()
+async def embed(ctx, name: str):
+    await msgdel(ctx)
+    
+    try:
+        with open (f"data/{name}.json", "r") as f:
+            data=json.load(f)
+
+        # Determine color: use JSON value if present, else random
+
+            if "color" in data and hasattr(discord.Color, data["color"]):
+                color_value = getattr(discord.Color, data["color"])()
+            else:
+                color_value = get_random_color()
+        
+            embed = discord.Embed(
+                title=data["title"],
+                description=data["description"],
+                color=color_value
+            )
+            if "image_url" in data and data["image_url"]:
+                embed.set_image(url=data["image_url"])
+
+            if "footer" in data and data["footer"]:
+                embed.set_footer(text=data["footer"])
+
+            await ctx.send(embed=embed)
+    except FileNotFoundError:
+        await ctx.send(f"No embed found for `{name}`.")
+    except Exception as e:
+        await ctx.send(f"Error loading embed: {e}")
+
+
 bot.run(TOKEN)
-
-
-723372562255446076
