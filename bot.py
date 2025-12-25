@@ -134,60 +134,52 @@ async def mothman(ctx):
     mothtwerk = "https://art.ngfiles.com/images/3435000/3435336_codingcanine_thicc-mothman.gif"
     await ctx.send(mothtwerk)
 
-# -- lets play with direct embeds
+
+# -- Modular Event Loader
 
 @bot.command()
-async def glimmerfen_event(ctx):
-    channel = bot.get_channel(1406738456176099348)
-    role_id = 1406739339739926538
-    role_mention = f"<@&{role_id}>"
-    if channel:
-        embed = discord.Embed(
-            title="🟣 **Shadows Over Glimmerfen Session 1** 🟣",
-            description="Session 1 kicks off this week — and everything feels normal.\n*Too normal*.\nJoin us in the cozy glow of the Shadewisp Inn, where arcade contests, bard singalongs, and small-town charm set the stage. The shadows haven't started whispering yet.\n\nBut they will.\n\n 🕯️ Expect festival vibes, flickering lanterns, and your first taste of the strange.",
-            
-            color=discord.Color.dark_purple()  # Optional: adds a left border color
-        )
-        embed.set_image(url="https://files.d20.io/images/453071419/W3xZgoS3AxDljsbcoPbeDw/max.png")
-        embed.set_footer(text="Saturday Nov 1, 2025 at 7 PM CST")
-    
-        await channel.send(content=role_mention, embed=embed)
-    else:
-        await ctx.send("could not find the test channel.")
-
-# -- testing externally loaded embed from individual json
-
-@bot.command()
-async def embed(ctx, name: str):
+async def event(ctx, name: str):
     await msgdel(ctx)
-    
+
     try:
-        with open (f"data/{name}.json", "r") as f:
-            data=json.load(f)
+        with open(f"data/{name}.json", "r", encoding="utf-8") as f:
+            data = json.load(f)
 
-        # Determine color: use JSON value if present, else random
+        # Get channel and role
+        channel_id = data.get("channel_id")
+        role_id = data.get("role_id")
+        channel = bot.get_channel(channel_id) if channel_id else ctx.channel
+        role_mention = f"<@&{role_id}>" if role_id else ""
 
-            if "color" in data and hasattr(discord.Color, data["color"]):
-                color_value = getattr(discord.Color, data["color"])()
-            else:
-                color_value = get_random_color()
-        
-            embed = discord.Embed(
-                title=data["title"],
-                description=data["description"],
-                color=color_value
-            )
-            if "image_url" in data and data["image_url"]:
-                embed.set_image(url=data["image_url"])
+        # Determine color
+        if "color" in data and hasattr(discord.Color, data["color"]):
+            color_value = getattr(discord.Color, data["color"])()
+        else:
+            color_value = get_random_color()
 
-            if "footer" in data and data["footer"]:
-                embed.set_footer(text=data["footer"])
+        # Build embed
+        embed = discord.Embed(
+            title=data.get("title", ""),
+            description=data.get("description", ""),
+            color=color_value
+        )
 
-            await ctx.send(embed=embed)
-    except FileNotFoundError:
-        await ctx.send(f"No embed found for `{name}`.")
+        if "image_url" in data and data["image_url"]:
+            embed.set_image(url=data["image_url"])
+        if "footer" in data and data["footer"]:
+            embed.set_footer(text=data["footer"])
+
+        # Send message
+        message = await channel.send(content=role_mention, embed=embed)
+
+        # Add reactions
+        for emoji in data.get("reactions", []):
+            try:
+                await message.add_reaction(emoji)
+            except Exception as e:
+                print(f"Failed to add reaction {emoji}: {e}")
+
     except Exception as e:
-        await ctx.send(f"Error loading embed: {e}")
-
+        await ctx.send(f"Error loading event embed: {e}")
 
 bot.run(TOKEN)

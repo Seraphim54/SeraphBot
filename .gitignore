@@ -209,3 +209,8 @@ __marimo__/
 # Personal use
 
 *.py.txt
+archives/
+*.archive
+
+/data/**
+!/data/modular_event_template.json
