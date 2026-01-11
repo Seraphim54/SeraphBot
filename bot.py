@@ -4,6 +4,7 @@ import os
 from dotenv import load_dotenv
 import random
 import json
+import re
 
 
 # Loads the Bots Token from .env file
@@ -140,6 +141,12 @@ async def mothman(ctx):
 @bot.command()
 async def event(ctx, name: str):
     await msgdel(ctx)
+
+    # Validate name to prevent path traversal attacks
+    # Only allow alphanumeric characters, hyphens, and underscores
+    if not re.match(r'^[a-zA-Z0-9_-]+$', name):
+        await ctx.send("Invalid event name. Only alphanumeric characters, hyphens, and underscores are allowed.")
+        return
 
     try:
         with open(f"data/{name}.json", "r", encoding="utf-8") as f:
