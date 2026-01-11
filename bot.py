@@ -110,7 +110,7 @@ async def newstats(ctx):
 
         while True:
             attempts += 1
-            stats = [roll_stat() for s in range(6)]
+            stats = [roll_stat() for _ in range(6)]
             if sum(stats) >= min_total:
                 return stats, attempts
 
