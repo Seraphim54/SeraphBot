@@ -105,15 +105,23 @@ async def newstats(ctx):
         top_three = sorted(rolls, reverse=True)[:3]
         return sum(top_three)
 
-    def roll_stat_block(min_total=72):
+    def roll_stat_block(min_total=72, max_attempts=100000):
         attempts = 0
+        stats = None
 
-        while True:
+        while attempts < max_attempts:
             attempts += 1
-            stats = [roll_stat() for _ in range(6)]
+            stats = [roll_stat() for s in range(6)]
             if sum(stats) >= min_total:
                 return stats, attempts
 
+        # If we reach here, we failed to hit min_total within max_attempts.
+        # Log this so it can be investigated, but still return the last stats.
+        print(
+            f"[newstats] Warning: failed to reach min_total={min_total} "
+            f"within max_attempts={max_attempts}. Returning last roll after {attempts} attempts."
+        )
+        return stats, attempts
     stats, tries = roll_stat_block()
     await ctx.send(f"Rolled in {tries} attempt(s): `{stats}` (Total: {sum(stats)})")
 
