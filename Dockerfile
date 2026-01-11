@@ -13,7 +13,6 @@ COPY bot.py ./
 COPY data ./data
 COPY archives ./archives
 COPY Images ./Images
-COPY .env ./
 
 # Run the bot
 CMD ["python", "bot.py"]
