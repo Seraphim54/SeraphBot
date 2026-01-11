@@ -101,7 +101,7 @@ async def mmn(ctx):
 @bot.command()
 async def newstats(ctx):
     def roll_stat():
-        rolls = [random.randint(1, 6) for v in range(4)]
+        rolls = [random.randint(1, 6) for _ in range(4)]
         top_three = sorted(rolls, reverse=True)[:3]
         return sum(top_three)
 
