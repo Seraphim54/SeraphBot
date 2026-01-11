@@ -180,6 +180,8 @@ async def event(ctx, name: str):
                 print(f"Failed to add reaction {emoji}: {e}")
 
     except Exception as e:
-        await ctx.send(f"Error loading event embed: {e}")
+        # Log the detailed error server-side, but send a generic message to users
+        print(f"Error loading event '{name}': {e}")
+        await ctx.send(f"Could not load event '{name}'. Please check that the event file exists and is properly formatted.")
 
 bot.run(TOKEN)
