@@ -1,5 +1,5 @@
 from discord.ext import commands
-from modules.utils import get_random_color, msgdel, disc_colors
+from modules.utils import get_random_color, msgdel
 import discord
 import json
 
