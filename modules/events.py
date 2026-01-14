@@ -1,5 +1,4 @@
 from discord.ext import commands
-from modules.rolls import Rolls
 from modules.utils import get_random_color, msgdel, disc_colors
 import discord
 import json
