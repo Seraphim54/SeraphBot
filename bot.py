@@ -75,10 +75,6 @@ async def deathsave(ctx):
     roll = random.randint(1, 20)
 
     if roll == 20:
-        result = "🎉 Critical Success! You're Up with 1 HP!"
-    elif roll == 1:
-        result = "⚰️ Critical Fail! Death's Shadow falls upon you twice! ⚰️"
-    elif roll >= 10:
         result = "✅ Success! You have gained one Success."
     else:
         result = "☠️ Fail! You are one step closer to Death."
@@ -97,6 +93,11 @@ async def random_build(ctx):
 @bot.command()
 async def mmn(ctx):
     await ctx.send("🤓 Eugene 🤓")
+
+if __name__ == "__main__":
+    # Load cogs from modules directory
+    bot.load_extension("modules.fun")
+    bot.run(TOKEN)
 
 @bot.command()
 async def newstats(ctx):
