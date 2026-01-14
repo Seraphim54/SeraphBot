@@ -16,7 +16,7 @@ bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
 # +----------------------+
 # |  LISTS, TUPLES, ETC  |
 # +----------------------+
-from modules.utils import alignments, races, classes, disc_colors, mention_user, msgdel, get_random_color
+from modules.utils import disc_colors
 
 # +--------------+
 # |  BOT EVENTS  |
