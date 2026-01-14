@@ -6,9 +6,6 @@ from dotenv import load_dotenv
 import random
 import json
 import asyncio
-import asyncio
-
-
 # Loads the Bots Token from .env file
 load_dotenv()
 TOKEN = os.getenv("bot_token")
