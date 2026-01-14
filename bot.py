@@ -1,9 +1,12 @@
+
 import discord
 from discord.ext import commands
 import os
 from dotenv import load_dotenv
 import random
 import json
+import asyncio
+import asyncio
 
 
 # Loads the Bots Token from .env file
@@ -16,29 +19,9 @@ bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
 # +----------------------+
 # |  LISTS, TUPLES, ETC  |
 # +----------------------+
+from modules.utils import alignments, races, classes, disc_colors, mention_user, msgdel, get_random_color
 
-alignments = ("Lawful Good", "Neutral Good", "Chaotic Good", "Lawful Neutral", "True Neutral", "Chaotic Neutral", "Lawful Evil", "Neutral Evil", "Chaotic Evil")
 
-races = ("Aarakocra", "Aasimar", "Astral Elf", "Autognome", "Bugbear", "Centaur", "Changeling", "Custom Lineage", "Deep Gnome", "Dhampir", "Dragonborn", "Duergar", "Dwarf", "Eladrin", "Elf", "Fairy", "Firbolg", "Genasi", "Giff", "Githyanki", "Githzerai", "Gnome", "Goblin", "Goliath", "Grung", "Hadozee", "Half-Elf", "Half-Orc", "Halfling", "Harengon", "Hexblood", "Hobgoblin", "Human", "Kalashtar", "Kender", "Kenku", "Kobold", "Leonin", "Lizardfolk", "Locathah", "Loxodon", "Minotaur", "Orc", "Owlin", "Plasmoid", "Reborn", "Satyr", "Sea Elf", "Shadar-Kai", "Shifter", "Simic Hybrid", "Tabaxi", "Thri-kreen", "Tiefling", "Tortle", "Triton", "Vedalken", "Verdan", "Warforged", "Yuan-ti")
-
-classes = ("Artificer", "Barbarian", "Bard", "Cleric", "Druid", "Fighter", "Monk", "Paladin", "Ranger", "Rogue", "Sorcerer", "Warlock", "Wizard")
-
-disc_colors = ("default", "teal", "dark_teal", "green", "dark_green", "blue", "dark_blue", "purple", "dark_purple", "magenta", "gold", "orange", "red", "dark_red", "brand_red", "brand_green", "grey", "dark_grey", "light_grey", "navy")
-
-rand_color = random.choice(disc_colors)
-
-# +--------------------+
-# |  HELPER FUNCTIONS  |
-# +--------------------+
-
-def mention_user(ctx):
-    return ctx.author.mention
-
-async def msgdel(ctx):
-    await ctx.message.delete()
-
-def get_random_color():
-    return getattr(discord.Color, random.choice(disc_colors))()
 
 # +--------------+
 # |  BOT EVENTS  |
@@ -54,10 +37,6 @@ async def on_ready():
 # +----------------+
 
 @bot.command()
-async def hello(ctx):
-    await ctx.send("Hello gamer! 🎮")
-
-@bot.command()
 async def hello2(ctx):
     await ctx.message.delete()
     await ctx.send("Hello gamer! If this worked right then your command of `!hello2` should not be above me")
@@ -65,39 +44,6 @@ async def hello2(ctx):
 @bot.command()
 async def colortest(ctx):
     await ctx.send(f"The color choices are {disc_colors}")
-
-@bot.command()
-async def dave(ctx):
-    await ctx.send("Now, Dave. I'm afraid I can't do that.")
-
-@bot.command()
-async def deathsave(ctx):
-    roll = random.randint(1, 20)
-
-    if roll == 20:
-        result = "✅ Success! You have gained one Success."
-    else:
-        result = "☠️ Fail! You are one step closer to Death."
-
-    await ctx.send(f"You rolled a {roll}: {result}")
-
-@bot.command()
-async def random_build(ctx):
-    await msgdel(ctx)
-    rand_align = random.choice(alignments)
-    rand_race = random.choice(races)
-    rand_class = random.choice(classes)
-
-    await ctx.send(f"🐉 Go forth and seek adventure, {mention_user(ctx)}, with your shiny new {rand_align} {rand_race} {rand_class}")
-
-@bot.command()
-async def mmn(ctx):
-    await ctx.send("🤓 Eugene 🤓")
-
-if __name__ == "__main__":
-    # Load cogs from modules directory
-    bot.load_extension("modules.fun")
-    bot.run(TOKEN)
 
 @bot.command()
 async def newstats(ctx):
@@ -193,4 +139,15 @@ async def event(ctx, name: str):
         print(f"Error loading event '{name}': {e}")
         await ctx.send(f"Could not load event '{name}'. Please check that the event file exists and is properly formatted.")
 
-bot.run(TOKEN)
+
+# +-------------------+
+# |  LOAD EXTENSIONS  |
+# +-------------------+
+
+if __name__ == "__main__":
+    async def main():
+        await bot.load_extension("modules.fun")
+        await bot.load_extension("modules.rolls")
+        await bot.start(TOKEN)
+
+    asyncio.run(main())
