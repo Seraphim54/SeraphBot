@@ -37,7 +37,7 @@ class Rolls(commands.Cog):
             top_three = sorted(rolls, reverse=True)[:3]
             return sum(top_three)
 
-        async def roll_stat_block(min_total=72, max_attempts=100000):
+        def roll_stat_block(min_total=72, max_attempts=100000):
             attempts = 0
             stats = None
 
@@ -54,7 +54,7 @@ class Rolls(commands.Cog):
                 f"within max_attempts={max_attempts}. Returning last roll after {attempts} attempts."
             )
             return stats, attempts
-        stats, tries = await roll_stat_block()
+        stats, tries = roll_stat_block()
         await ctx.send(f"Rolled in {tries} attempt(s): `{stats}` (Total: {sum(stats)})")
 
 
