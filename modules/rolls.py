@@ -30,6 +30,34 @@ class Rolls(commands.Cog):
 
         await ctx.send(f"🐉 Go forth and seek adventure, {mention_user(ctx)}, with your shiny new {rand_align} {rand_race} {rand_class}")
 
+    @commands.command()
+    async def newstats(self, ctx):
+        def roll_stat():
+            rolls = [random.randint(1, 6) for _ in range(4)]
+            top_three = sorted(rolls, reverse=True)[:3]
+            return sum(top_three)
+
+        async def roll_stat_block(min_total=72, max_attempts=100000):
+            attempts = 0
+            stats = None
+
+            while attempts < max_attempts:
+                attempts += 1
+                stats = [roll_stat() for s in range(6)]
+                if sum(stats) >= min_total:
+                    return stats, attempts
+
+            # If we reach here, we failed to hit min_total within max_attempts.
+            # Log this so it can be investigated, but still return the last stats.
+            print(
+                f"[newstats] Warning: failed to reach min_total={min_total} "
+                f"within max_attempts={max_attempts}. Returning last roll after {attempts} attempts."
+            )
+            return stats, attempts
+        stats, tries = await roll_stat_block()
+        await ctx.send(f"Rolled in {tries} attempt(s): `{stats}` (Total: {sum(stats)})")
+
+
 
 async def setup(bot):
     await bot.add_cog(Rolls(bot))
