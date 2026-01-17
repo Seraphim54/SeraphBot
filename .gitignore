@@ -214,3 +214,4 @@ archives/
 
 /data/**
 !/data/modular_event_template.json
+!/data/role_reactions_template.json

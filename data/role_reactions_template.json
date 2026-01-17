@@ -1,0 +1,26 @@
+{
+  "roles": [
+    {
+      "emoji": "🧙",
+      "role_id": 123456789012345678,
+      "description": "Wizard",
+      "admin_approval": false
+    },
+    {
+      "emoji": "🛡️",
+      "role_id": 234567890123456789,
+      "description": "Paladin",
+      "admin_approval": true
+    },
+    {
+      "emoji": "🏹",
+      "role_id": 345678901234567890,
+      "description": "Ranger",
+      "admin_approval": true
+    }
+  ],
+  "channel_id": 987654321098765432,
+  "admin_channel_id": 123123123123123123,
+  "embed_title": "Choose Your Role!",
+  "embed_description": "React with an emoji below to be assigned a role."
+}
