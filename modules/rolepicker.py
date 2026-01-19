@@ -156,12 +156,7 @@ class RolePicker(commands.Cog):
                 ) and
                 user.guild_permissions.administrator
             )
-        try:
-            reaction, user = await self.bot.wait_for('reaction_add', timeout=3600, check=check)
-        except asyncio.TimeoutError:
-            await request_msg.edit(content="Request timed out.")
-            await self._notify_user(member, "Your D&D role request timed out.")
-            return
+        reaction, user = await self.bot.wait_for('reaction_add', check=check)
         # Remove all reactions from admin message after decision
         await request_msg.clear_reactions()
         if hasattr(reaction.emoji, 'id') and str(reaction.emoji.id) == "858802171193327616":
