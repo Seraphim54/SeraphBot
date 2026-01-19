@@ -2,12 +2,6 @@ import discord
 from discord.ext import commands
 import json
 import os
-
-# Cleaned-up, single definition RolePicker module
-import discord
-from discord.ext import commands
-import json
-import os
 import asyncio
 
 class RolePicker(commands.Cog):
@@ -63,6 +57,13 @@ class RolePicker(commands.Cog):
         if not role:
             return
         if role_entry.get('admin_approval'):
+            # Remove user's reaction immediately
+            channel = self.bot.get_channel(self.config['channel_id'])
+            msg = await channel.fetch_message(self.config['message_id'])
+            key = (member.id, msg.id, str(payload.emoji))
+            self._bot_removing_reactions.add(key)
+            await msg.remove_reaction(payload.emoji, member)
+            # Start admin approval flow
             await self._handle_admin_approval(payload, member, role_entry, add=True)
         else:
             if role in member.roles:
@@ -71,12 +72,11 @@ class RolePicker(commands.Cog):
             else:
                 await member.add_roles(role, reason="RolePicker reaction add")
                 await self._notify_user(member, f"You have been given the role: {role.name}")
-        channel = self.bot.get_channel(self.config['channel_id'])
-        msg = await channel.fetch_message(self.config['message_id'])
-        # Track that the bot is about to remove this user's reaction so we can ignore the resulting remove event
-        key = (member.id, msg.id, str(payload.emoji))
-        self._bot_removing_reactions.add(key)
-        await msg.remove_reaction(payload.emoji, member)
+            channel = self.bot.get_channel(self.config['channel_id'])
+            msg = await channel.fetch_message(self.config['message_id'])
+            key = (member.id, msg.id, str(payload.emoji))
+            self._bot_removing_reactions.add(key)
+            await msg.remove_reaction(payload.emoji, member)
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
@@ -109,9 +109,22 @@ class RolePicker(commands.Cog):
         )
 
     def _get_role_entry(self, emoji):
+        # emoji: discord.PartialEmoji or str
         for entry in self.config['roles']:
-            if str(entry['emoji']) == str(emoji):
-                return entry
+            entry_emoji = entry['emoji']
+            # Custom emoji: <a:name:id> or <:name:id>
+            if entry_emoji.startswith('<:') or entry_emoji.startswith('<a:'):
+                # Extract ID
+                try:
+                    entry_id = int(entry_emoji.split(':')[2][:-1])
+                except Exception:
+                    continue
+                if hasattr(emoji, 'id') and emoji.id == entry_id:
+                    return entry
+            else:
+                # Unicode emoji
+                if (hasattr(emoji, 'name') and emoji.name == entry_emoji) or (str(emoji) == entry_emoji):
+                    return entry
         return None
 
     async def _handle_admin_approval(self, payload, member, role_entry, add=True):
@@ -119,39 +132,55 @@ class RolePicker(commands.Cog):
         if not admin_channel_id:
             return
         admin_channel = self.bot.get_channel(admin_channel_id)
-        action = "add" if add else "remove"
+        # Send DM to user that request is pending
+        await self._notify_user(member, "Your request for D&D access is pending administrator approval.")
+        # Send admin channel message
         embed = discord.Embed(
             title="Role Approval Needed",
-            description=f"User: {member.mention}\nRole: <@&{role_entry['role_id']}>\nAction: {action}",
+            description=f"User: {member.mention}\nRequest: D&D access\nReact below to approve as Player, Spectator, or Deny.",
             color=discord.Color.gold()
         )
         request_msg = await admin_channel.send(embed=embed)
-        await request_msg.add_reaction("✅")
-        await request_msg.add_reaction("❌")
+        player_emoji_str = "<:DnD:858802171193327616>"
+        spectator_emoji_str = "<:dndspec:1462113193051553799>"
+        await request_msg.add_reaction(player_emoji_str)
+        await request_msg.add_reaction(spectator_emoji_str)
+        await request_msg.add_reaction("❌")  # Deny
         def check(reaction, user):
             return (
                 reaction.message.id == request_msg.id and
-                str(reaction.emoji) in ["✅", "❌"] and
+                (
+                    (hasattr(reaction.emoji, 'id') and str(reaction.emoji.id) == "858802171193327616") or
+                    (hasattr(reaction.emoji, 'id') and str(reaction.emoji.id) == "1462113193051553799") or
+                    (str(reaction.emoji) == "❌")
+                ) and
                 user.guild_permissions.administrator
             )
         try:
             reaction, user = await self.bot.wait_for('reaction_add', timeout=3600, check=check)
         except asyncio.TimeoutError:
             await request_msg.edit(content="Request timed out.")
-            await self._notify_user(member, "Your role request timed out.")
+            await self._notify_user(member, "Your D&D role request timed out.")
             return
-        if str(reaction.emoji) == "✅":
-            role = member.guild.get_role(role_entry['role_id'])
-            if add:
-                await member.add_roles(role, reason="Admin approved rolepicker")
-                await self._notify_user(member, f"Your request for {role.name} was approved!")
-            else:
-                await member.remove_roles(role, reason="Admin approved role removal")
-                await self._notify_user(member, f"Your request to remove {role.name} was approved!")
-            await request_msg.edit(content="Request approved.")
+        # Remove all reactions from admin message after decision
+        await request_msg.clear_reactions()
+        if hasattr(reaction.emoji, 'id') and str(reaction.emoji.id) == "858802171193327616":
+            # Approve as Player
+            player_role_id = 957848615173378108
+            role = member.guild.get_role(player_role_id)
+            await member.add_roles(role, reason="Admin approved D&D Player")
+            await self._notify_user(member, f"Your request for D&D Player was approved!")
+            await request_msg.edit(content="Request approved as Player.")
+        elif hasattr(reaction.emoji, 'id') and str(reaction.emoji.id) == "1462113193051553799":
+            # Approve as Spectator
+            spectator_role_id = 809223517949919272
+            role = member.guild.get_role(spectator_role_id)
+            await member.add_roles(role, reason="Admin approved D&D Spectator")
+            await self._notify_user(member, f"Your request for D&D Spectator was approved!")
+            await request_msg.edit(content="Request approved as Spectator.")
         else:
             await request_msg.edit(content="Request denied.")
-            await self._notify_user(member, "Your role request was denied by an admin.")
+            await self._notify_user(member, "Your D&D role request was denied by an admin.")
 
     async def _notify_user(self, member, message):
         try:
