@@ -22,5 +22,28 @@
   "channel_id": 987654321098765432,
   "admin_channel_id": 123123123123123123,
   "embed_title": "Choose Your Role!",
-  "embed_description": "React with an emoji below to be assigned a role."
+  "embed_description": "React with an emoji below to be assigned a role.",
+  "admin_approval": {
+    "request_name": "role access",
+    "pending_message": "Your request for {request_name} is pending administrator approval.",
+    "approval_prompt": "React below to approve with a specific role or Deny.",
+    "deny_emoji": "❌",
+    "denied_message": "Your {request_name} request was denied by an admin.",
+    "approval_options": [
+      {
+        "emoji": "<:emoji_name:123456789012345678>",
+        "role_id": 111111111111111111,
+        "label": "Option A",
+        "approved_message": "Your request for {label} was approved!",
+        "admin_confirmation": "Request approved as {label}."
+      },
+      {
+        "emoji": "<:emoji_name:987654321098765432>",
+        "role_id": 222222222222222222,
+        "label": "Option B",
+        "approved_message": "Your request for {label} was approved!",
+        "admin_confirmation": "Request approved as {label}."
+      }
+    ]
+  }
 }

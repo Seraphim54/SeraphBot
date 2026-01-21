@@ -153,50 +153,97 @@ class RolePicker(commands.Cog):
         if not admin_channel_id:
             return
         admin_channel = self.bot.get_channel(admin_channel_id)
+        
+        # Get admin approval configuration
+        approval_config = self.config.get('admin_approval', {})
+        request_name = approval_config.get('request_name', 'role access')
+        pending_msg = approval_config.get('pending_message', 'Your request is pending administrator approval.')
+        approval_prompt = approval_config.get('approval_prompt', 'React below to approve or deny.')
+        deny_emoji = approval_config.get('deny_emoji', '❌')
+        denied_msg = approval_config.get('denied_message', 'Your request was denied by an admin.')
+        approval_options = approval_config.get('approval_options', [])
+        
         # Send DM to user that request is pending
-        await self._notify_user(member, "Your request for D&D access is pending administrator approval.")
+        await self._notify_user(member, pending_msg.format(request_name=request_name))
+        
         # Send admin channel message
         embed = discord.Embed(
             title="Role Approval Needed",
-            description=f"User: {member.mention}\nRequest: D&D access\nReact below to approve as Player, Spectator, or Deny.",
+            description=f"User: {member.mention}\nRequest: {request_name}\n{approval_prompt}",
             color=discord.Color.gold()
         )
         request_msg = await admin_channel.send(embed=embed)
-        player_emoji_str = "<:DnD:858802171193327616>"
-        spectator_emoji_str = "<:dndspec:1462113193051553799>"
-        await request_msg.add_reaction(player_emoji_str)
-        await request_msg.add_reaction(spectator_emoji_str)
-        await request_msg.add_reaction("❌")  # Deny
+        
+        # Add reactions for all approval options plus deny
+        for option in approval_options:
+            await request_msg.add_reaction(option['emoji'])
+        await request_msg.add_reaction(deny_emoji)
+        
+        # Build check function dynamically based on configured emojis
         def check(reaction, user):
-            return (
-                reaction.message.id == request_msg.id and
-                (
-                    (hasattr(reaction.emoji, 'id') and str(reaction.emoji.id) == "858802171193327616") or
-                    (hasattr(reaction.emoji, 'id') and str(reaction.emoji.id) == "1462113193051553799") or
-                    (str(reaction.emoji) == "❌")
-                ) and
-                user.guild_permissions.administrator
-            )
+            if reaction.message.id != request_msg.id or not user.guild_permissions.administrator:
+                return False
+            
+            # Check deny emoji
+            if str(reaction.emoji) == deny_emoji:
+                return True
+            
+            # Check approval option emojis
+            for option in approval_options:
+                option_emoji = option['emoji']
+                # Custom emoji: <a:name:id> or <:name:id>
+                if option_emoji.startswith('<:') or option_emoji.startswith('<a:'):
+                    try:
+                        option_id = int(option_emoji.split(':')[2][:-1])
+                        if hasattr(reaction.emoji, 'id') and reaction.emoji.id == option_id:
+                            return True
+                    except Exception:
+                        continue
+                else:
+                    # Unicode emoji
+                    if str(reaction.emoji) == option_emoji:
+                        return True
+            
+            return False
+        
         reaction, user = await self.bot.wait_for('reaction_add', check=check)
+        
         # Remove all reactions from admin message after decision
         await request_msg.clear_reactions()
-        if hasattr(reaction.emoji, 'id') and str(reaction.emoji.id) == "858802171193327616":
-            # Approve as Player
-            player_role_id = 957848615173378108
-            role = member.guild.get_role(player_role_id)
-            await member.add_roles(role, reason="Admin approved D&D Player")
-            await self._notify_user(member, f"Your request for D&D Player was approved!")
-            await request_msg.edit(content="Request approved as Player.")
-        elif hasattr(reaction.emoji, 'id') and str(reaction.emoji.id) == "1462113193051553799":
-            # Approve as Spectator
-            spectator_role_id = 809223517949919272
-            role = member.guild.get_role(spectator_role_id)
-            await member.add_roles(role, reason="Admin approved D&D Spectator")
-            await self._notify_user(member, f"Your request for D&D Spectator was approved!")
-            await request_msg.edit(content="Request approved as Spectator.")
-        else:
+        
+        # Check if denied
+        if str(reaction.emoji) == deny_emoji:
             await request_msg.edit(content="Request denied.")
-            await self._notify_user(member, "Your D&D role request was denied by an admin.")
+            await self._notify_user(member, denied_msg.format(request_name=request_name))
+            return
+        
+        # Find which approval option was selected
+        for option in approval_options:
+            option_emoji = option['emoji']
+            is_match = False
+            
+            # Custom emoji: <a:name:id> or <:name:id>
+            if option_emoji.startswith('<:') or option_emoji.startswith('<a:'):
+                try:
+                    option_id = int(option_emoji.split(':')[2][:-1])
+                    if hasattr(reaction.emoji, 'id') and reaction.emoji.id == option_id:
+                        is_match = True
+                except Exception:
+                    continue
+            else:
+                # Unicode emoji
+                if str(reaction.emoji) == option_emoji:
+                    is_match = True
+            
+            if is_match:
+                role = member.guild.get_role(option['role_id'])
+                if role:
+                    await member.add_roles(role, reason=f"Admin approved {option['label']}")
+                    approved_msg = option.get('approved_message', 'Your request was approved!')
+                    await self._notify_user(member, approved_msg.format(label=option['label'], request_name=request_name))
+                    admin_confirm = option.get('admin_confirmation', 'Request approved.')
+                    await request_msg.edit(content=admin_confirm.format(label=option['label']))
+                break
 
     async def _notify_user(self, member, message):
         try:
