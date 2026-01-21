@@ -12,8 +12,25 @@ class RolePicker(commands.Cog):
         self._bot_removing_reactions = set()  # (user_id, message_id, emoji_str)
 
     def load_config(self):
-        with open(self.config_path, 'r', encoding='utf-8') as f:
-            self.config = json.load(f)
+        try:
+            with open(self.config_path, 'r', encoding='utf-8') as f:
+                self.config = json.load(f)
+        except FileNotFoundError:
+            # Initialize a default configuration if the file is missing
+            self.config = {
+                "embed_title": "Pick Your Role!",
+                "roles": []
+            }
+            # Ensure the directory exists and create the config file
+            os.makedirs(os.path.dirname(self.config_path), exist_ok=True)
+            with open(self.config_path, 'w', encoding='utf-8') as f:
+                json.dump(self.config, f, indent=2)
+        except json.JSONDecodeError:
+            # Fall back to a safe default if the JSON is corrupted
+            self.config = {
+                "embed_title": "Pick Your Role!",
+                "roles": []
+            }
 
     @commands.command()
     async def rolepicker(self, ctx):
