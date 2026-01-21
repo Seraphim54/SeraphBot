@@ -182,6 +182,9 @@ class RolePicker(commands.Cog):
             return str(reaction_emoji) == emoji_str
 
     async def _handle_admin_approval(self, payload, member, role_entry, add=True):
+        # 'add' is reserved for future differentiation between add/remove approvals.
+        # Referencing it here avoids unused-parameter warnings without changing behavior.
+        _ = add
         admin_channel_id = self.config.get('admin_channel_id')
         if not admin_channel_id:
             return
