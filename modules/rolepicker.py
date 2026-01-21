@@ -153,6 +153,14 @@ class RolePicker(commands.Cog):
         if not admin_channel_id:
             return
         admin_channel = self.bot.get_channel(admin_channel_id)
+        if admin_channel is None:
+            # Admin channel is misconfigured or inaccessible; notify user and exit gracefully
+            await self._notify_user(
+                member,
+                "Your request for D&D access could not be processed because the admin approval channel "
+                "is not configured correctly. Please contact a server administrator."
+            )
+            return
         # Send DM to user that request is pending
         await self._notify_user(member, "Your request for D&D access is pending administrator approval.")
         # Send admin channel message
