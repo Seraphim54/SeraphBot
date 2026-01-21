@@ -50,6 +50,7 @@ if __name__ == "__main__":
         await bot.load_extension("modules.rolls")
         await bot.load_extension("modules.admin")
         await bot.load_extension("modules.events")
+        await bot.load_extension("modules.rolepicker")
         await bot.start(TOKEN)
 
     asyncio.run(main())
