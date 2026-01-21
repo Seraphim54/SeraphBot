@@ -230,8 +230,8 @@ class RolePicker(commands.Cog):
         """Attempt to send a DM to the user. Silently fails if user has DMs disabled or other send errors occur."""
         try:
             await member.send(message)
-        except (discord.Forbidden, discord.HTTPException):
-            # User has DMs disabled or the message cannot be sent
+        except (discord.Forbidden, discord.HTTPException, discord.NotFound):
+            # User has DMs disabled, the message cannot be sent, or the user object is invalid
             # This is acceptable - we don't want to break the flow if DMs fail
             pass
 
