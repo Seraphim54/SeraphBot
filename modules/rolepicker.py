@@ -148,11 +148,39 @@ class RolePicker(commands.Cog):
                     return entry
         return None
 
+    def _emoji_matches(self, emoji_str, reaction_emoji):
+        """
+        Helper method to check if a configured emoji string matches a Discord reaction emoji.
+        
+        Args:
+            emoji_str: The emoji string from configuration (e.g., "<:name:id>" or "❌")
+            reaction_emoji: The Discord reaction emoji object
+            
+        Returns:
+            bool: True if the emojis match, False otherwise
+        """
+        # Custom emoji: <a:name:id> or <:name:id>
+        if emoji_str.startswith('<:') or emoji_str.startswith('<a:'):
+            try:
+                emoji_id = int(emoji_str.split(':')[2][:-1])
+                return hasattr(reaction_emoji, 'id') and reaction_emoji.id == emoji_id
+            except (IndexError, ValueError):
+                return False
+        else:
+            # Unicode emoji
+            return str(reaction_emoji) == emoji_str
+
     async def _handle_admin_approval(self, payload, member, role_entry, add=True):
         admin_channel_id = self.config.get('admin_channel_id')
         if not admin_channel_id:
             return
         admin_channel = self.bot.get_channel(admin_channel_id)
+        
+        # Check if admin channel is accessible
+        if not admin_channel:
+            print(f"Warning: Admin channel {admin_channel_id} not found or inaccessible")
+            await self._notify_user(member, "Your request could not be processed. Please contact an administrator.")
+            return
         
         # Get admin approval configuration
         approval_config = self.config.get('admin_approval', {})
@@ -163,8 +191,12 @@ class RolePicker(commands.Cog):
         denied_msg = approval_config.get('denied_message', 'Your request was denied by an admin.')
         approval_options = approval_config.get('approval_options', [])
         
-        # Send DM to user that request is pending
-        await self._notify_user(member, pending_msg.format(request_name=request_name))
+        # Send DM to user that request is pending (with safe formatting)
+        try:
+            formatted_pending_msg = pending_msg.format(request_name=request_name)
+        except (KeyError, ValueError):
+            formatted_pending_msg = f"Your request for {request_name} is pending administrator approval."
+        await self._notify_user(member, formatted_pending_msg)
         
         # Send admin channel message
         embed = discord.Embed(
@@ -174,35 +206,31 @@ class RolePicker(commands.Cog):
         )
         request_msg = await admin_channel.send(embed=embed)
         
-        # Add reactions for all approval options plus deny
+        # Add reactions for all approval options plus deny (with error handling)
         for option in approval_options:
-            await request_msg.add_reaction(option['emoji'])
-        await request_msg.add_reaction(deny_emoji)
+            try:
+                await request_msg.add_reaction(option['emoji'])
+            except (discord.HTTPException, discord.NotFound, discord.Forbidden) as e:
+                print(f"Warning: Failed to add reaction {option['emoji']}: {e}")
+        
+        try:
+            await request_msg.add_reaction(deny_emoji)
+        except (discord.HTTPException, discord.NotFound, discord.Forbidden) as e:
+            print(f"Warning: Failed to add deny reaction {deny_emoji}: {e}")
         
         # Build check function dynamically based on configured emojis
         def check(reaction, user):
             if reaction.message.id != request_msg.id or not user.guild_permissions.administrator:
                 return False
             
-            # Check deny emoji
-            if str(reaction.emoji) == deny_emoji:
+            # Check deny emoji using helper method
+            if self._emoji_matches(deny_emoji, reaction.emoji):
                 return True
             
-            # Check approval option emojis
+            # Check approval option emojis using helper method
             for option in approval_options:
-                option_emoji = option['emoji']
-                # Custom emoji: <a:name:id> or <:name:id>
-                if option_emoji.startswith('<:') or option_emoji.startswith('<a:'):
-                    try:
-                        option_id = int(option_emoji.split(':')[2][:-1])
-                        if hasattr(reaction.emoji, 'id') and reaction.emoji.id == option_id:
-                            return True
-                    except Exception:
-                        continue
-                else:
-                    # Unicode emoji
-                    if str(reaction.emoji) == option_emoji:
-                        return True
+                if self._emoji_matches(option['emoji'], reaction.emoji):
+                    return True
             
             return False
         
@@ -212,37 +240,59 @@ class RolePicker(commands.Cog):
         await request_msg.clear_reactions()
         
         # Check if denied
-        if str(reaction.emoji) == deny_emoji:
+        if self._emoji_matches(deny_emoji, reaction.emoji):
             await request_msg.edit(content="Request denied.")
-            await self._notify_user(member, denied_msg.format(request_name=request_name))
+            try:
+                formatted_denied_msg = denied_msg.format(request_name=request_name)
+            except (KeyError, ValueError):
+                formatted_denied_msg = f"Your {request_name} request was denied by an admin."
+            await self._notify_user(member, formatted_denied_msg)
             return
         
-        # Find which approval option was selected
+        # Find which approval option was selected and assign role
         for option in approval_options:
-            option_emoji = option['emoji']
-            is_match = False
-            
-            # Custom emoji: <a:name:id> or <:name:id>
-            if option_emoji.startswith('<:') or option_emoji.startswith('<a:'):
-                try:
-                    option_id = int(option_emoji.split(':')[2][:-1])
-                    if hasattr(reaction.emoji, 'id') and reaction.emoji.id == option_id:
-                        is_match = True
-                except Exception:
-                    continue
-            else:
-                # Unicode emoji
-                if str(reaction.emoji) == option_emoji:
-                    is_match = True
-            
-            if is_match:
+            if self._emoji_matches(option['emoji'], reaction.emoji):
                 role = member.guild.get_role(option['role_id'])
-                if role:
+                if not role:
+                    # Role doesn't exist - notify user and admin
+                    error_msg = f"Error: Role {option['role_id']} not found in server."
+                    await request_msg.edit(content=error_msg)
+                    await self._notify_user(member, "Your request could not be completed. Please contact an administrator.")
+                    print(f"Error: Role ID {option['role_id']} not found for approval option '{option['label']}'")
+                    return
+                
+                try:
                     await member.add_roles(role, reason=f"Admin approved {option['label']}")
-                    approved_msg = option.get('approved_message', 'Your request was approved!')
-                    await self._notify_user(member, approved_msg.format(label=option['label'], request_name=request_name))
-                    admin_confirm = option.get('admin_confirmation', 'Request approved.')
-                    await request_msg.edit(content=admin_confirm.format(label=option['label']))
+                    
+                    # Format and send approval messages
+                    try:
+                        approved_msg = option.get('approved_message', 'Your request was approved!')
+                        formatted_approved_msg = approved_msg.format(label=option['label'], request_name=request_name)
+                    except (KeyError, ValueError):
+                        formatted_approved_msg = f"Your request for {option['label']} was approved!"
+                    
+                    await self._notify_user(member, formatted_approved_msg)
+                    
+                    try:
+                        admin_confirm = option.get('admin_confirmation', 'Request approved.')
+                        formatted_admin_confirm = admin_confirm.format(label=option['label'])
+                    except (KeyError, ValueError):
+                        formatted_admin_confirm = f"Request approved as {option['label']}."
+                    
+                    await request_msg.edit(content=formatted_admin_confirm)
+                except discord.Forbidden:
+                    # Bot lacks permissions to assign the role
+                    error_msg = f"Error: Missing permissions to assign role {role.name}."
+                    await request_msg.edit(content=error_msg)
+                    await self._notify_user(member, "Your request could not be completed due to permission issues. Please contact an administrator.")
+                    print(f"Error: Missing permissions to assign role {role.name} (ID: {role.id})")
+                except discord.HTTPException as e:
+                    # General Discord API error
+                    error_msg = f"Error: Failed to assign role - {str(e)}"
+                    await request_msg.edit(content=error_msg)
+                    await self._notify_user(member, "Your request could not be completed. Please contact an administrator.")
+                    print(f"Error: Failed to assign role {role.name} (ID: {role.id}): {e}")
+                
                 break
 
     async def _notify_user(self, member, message):
