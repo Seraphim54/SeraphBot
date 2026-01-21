@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 import json
 import os
+import logging
 import asyncio
 from modules.utils import get_random_color
 
@@ -25,8 +26,12 @@ class RolePicker(commands.Cog):
             }
             # Ensure the directory exists and create the config file
             os.makedirs(os.path.dirname(self.config_path), exist_ok=True)
-            with open(self.config_path, 'w', encoding='utf-8') as f:
-                json.dump(self.config, f, indent=2)
+            try:
+                with open(self.config_path, 'w', encoding='utf-8') as f:
+                    json.dump(self.config, f, indent=2)
+            except (IOError, OSError, PermissionError) as e:
+                # If file write fails during init, log but continue with in-memory config
+                logging.warning(f"Failed to create role picker configuration file: {e}")
         except json.JSONDecodeError:
             # Fall back to a safe default if the JSON is corrupted
             self.config = {
@@ -63,8 +68,14 @@ class RolePicker(commands.Cog):
         msg = await ctx.send(embed=embed)
         self.config['message_id'] = msg.id
         self.config['channel_id'] = msg.channel.id
-        with open(self.config_path, 'w', encoding='utf-8') as f:
-            json.dump(self.config, f, indent=2)
+        try:
+            with open(self.config_path, 'w', encoding='utf-8') as f:
+                json.dump(self.config, f, indent=2)
+        except (IOError, OSError, PermissionError) as e:
+            # If file write fails, log the error but don't crash the command
+            # The message was already sent, so the role picker is functional
+            # but the config won't be persisted
+            logging.warning(f"Failed to save role picker configuration: {e}")
         for entry in self.config['roles']:
             try:
                 await msg.add_reaction(entry['emoji'])
