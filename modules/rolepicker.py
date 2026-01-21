@@ -109,6 +109,8 @@ class RolePicker(commands.Cog):
         if not self._is_rolepicker_message(payload):
             return
         guild = self.bot.get_guild(payload.guild_id)
+        if guild is None:
+            return
         member = guild.get_member(payload.user_id)
         if member is None:
             return
