@@ -57,7 +57,11 @@ class RolePicker(commands.Cog):
         with open(self.config_path, 'w', encoding='utf-8') as f:
             json.dump(self.config, f, indent=2)
         for entry in self.config['roles']:
-            await msg.add_reaction(entry['emoji'])
+            try:
+                await msg.add_reaction(entry['emoji'])
+            except (discord.Forbidden, discord.HTTPException, discord.NotFound):
+                # Ignore failures to add reactions (invalid emoji, missing permissions, etc.)
+                pass
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
