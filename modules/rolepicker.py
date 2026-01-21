@@ -192,16 +192,24 @@ class RolePicker(commands.Cog):
             # Approve as Player
             player_role_id = 957848615173378108
             role = member.guild.get_role(player_role_id)
-            await member.add_roles(role, reason="Admin approved D&D Player")
-            await self._notify_user(member, f"Your request for D&D Player was approved!")
-            await request_msg.edit(content="Request approved as Player.")
+            if role is not None:
+                await member.add_roles(role, reason="Admin approved D&D Player")
+                await self._notify_user(member, f"Your request for D&D Player was approved!")
+                await request_msg.edit(content="Request approved as Player.")
+            else:
+                await request_msg.edit(content="Configuration error: Player role not found.")
+                await self._notify_user(member, "There was a configuration problem assigning your D&D Player role. Please contact an admin.")
         elif hasattr(reaction.emoji, 'id') and str(reaction.emoji.id) == "1462113193051553799":
             # Approve as Spectator
             spectator_role_id = 809223517949919272
             role = member.guild.get_role(spectator_role_id)
-            await member.add_roles(role, reason="Admin approved D&D Spectator")
-            await self._notify_user(member, f"Your request for D&D Spectator was approved!")
-            await request_msg.edit(content="Request approved as Spectator.")
+            if role is not None:
+                await member.add_roles(role, reason="Admin approved D&D Spectator")
+                await self._notify_user(member, f"Your request for D&D Spectator was approved!")
+                await request_msg.edit(content="Request approved as Spectator.")
+            else:
+                await request_msg.edit(content="Configuration error: Spectator role not found.")
+                await self._notify_user(member, "There was a configuration problem assigning your D&D Spectator role. Please contact an admin.")
         else:
             await request_msg.edit(content="Request denied.")
             await self._notify_user(member, "Your D&D role request was denied by an admin.")
