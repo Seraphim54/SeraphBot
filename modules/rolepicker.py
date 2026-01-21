@@ -88,7 +88,7 @@ class RolePicker(commands.Cog):
             self._bot_removing_reactions.add(key)
             await msg.remove_reaction(payload.emoji, member)
             # Start admin approval flow
-            await self._handle_admin_approval(payload, member, role_entry, add=True)
+            await self._handle_admin_approval(payload, member, role_entry)
         else:
             if role in member.roles:
                 await member.remove_roles(role, reason="RolePicker toggle off")
@@ -119,9 +119,9 @@ class RolePicker(commands.Cog):
         role = guild.get_role(role_entry['role_id'])
         if not role:
             return
-        if role_entry.get('admin_approval'):
-            await self._handle_admin_approval(payload, member, role_entry, add=False)
-        else:
+        # For admin approval roles, ignore reaction removals since users never have the role
+        # (it's removed by the bot immediately on add)
+        if not role_entry.get('admin_approval'):
             if role in member.roles:
                 await member.remove_roles(role, reason="RolePicker reaction remove")
                 await self._notify_user(member, f"The role {role.name} has been removed from you.")
@@ -151,7 +151,7 @@ class RolePicker(commands.Cog):
                     return entry
         return None
 
-    async def _handle_admin_approval(self, payload, member, role_entry, add=True):
+    async def _handle_admin_approval(self, payload, member, role_entry):
         admin_channel_id = self.config.get('admin_channel_id')
         if not admin_channel_id:
             return
