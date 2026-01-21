@@ -54,8 +54,14 @@ class RolePicker(commands.Cog):
         msg = await ctx.send(embed=embed)
         self.config['message_id'] = msg.id
         self.config['channel_id'] = msg.channel.id
-        with open(self.config_path, 'w', encoding='utf-8') as f:
-            json.dump(self.config, f, indent=2)
+        try:
+            with open(self.config_path, 'w', encoding='utf-8') as f:
+                json.dump(self.config, f, indent=2)
+        except (IOError, OSError, PermissionError) as e:
+            # If file write fails, log the error but don't crash the command
+            # The message was already sent, so the role picker is functional
+            # but the config won't be persisted
+            print(f"Warning: Failed to save role picker configuration: {e}")
         for entry in self.config['roles']:
             try:
                 await msg.add_reaction(entry['emoji'])
