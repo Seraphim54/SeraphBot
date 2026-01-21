@@ -227,9 +227,12 @@ class RolePicker(commands.Cog):
             await self._notify_user(member, "Your D&D role request was denied by an admin.")
 
     async def _notify_user(self, member, message):
+        """Attempt to send a DM to the user. Silently fails if user has DMs disabled or other send errors occur."""
         try:
             await member.send(message)
-        except Exception:
+        except (discord.Forbidden, discord.HTTPException):
+            # User has DMs disabled or the message cannot be sent
+            # This is acceptable - we don't want to break the flow if DMs fail
             pass
 
 async def setup(bot):
