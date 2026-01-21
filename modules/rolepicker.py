@@ -2,6 +2,8 @@ import discord
 from discord.ext import commands
 import json
 import os
+import asyncio
+from modules.utils import get_random_color
 
 class RolePicker(commands.Cog):
     def __init__(self, bot):
@@ -42,10 +44,17 @@ class RolePicker(commands.Cog):
             approval = " (Admin Approval Required)" if entry.get('admin_approval') else ""
             desc_lines.append(f"{entry['emoji']} — {entry['description']}{approval}")
         description = "\n".join(desc_lines)
+        
+        # Determine color following the pattern from events module
+        if "color" in self.config and hasattr(discord.Color, self.config["color"]):
+            color_value = getattr(discord.Color, self.config["color"])()
+        else:
+            color_value = get_random_color()
+        
         embed = discord.Embed(
             title=self.config.get('embed_title', 'Pick Your Role!'),
             description=description,
-            color=discord.Color.blurple()
+            color=color_value
         )
         if 'embed_image' in self.config:
             embed.set_image(url=self.config['embed_image'])

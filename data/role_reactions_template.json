@@ -23,6 +23,7 @@
   "admin_channel_id": 123123123123123123,
   "embed_title": "Choose Your Role!",
   "embed_description": "React with an emoji below to be assigned a role.",
+  "color": "blurple"
   "admin_approval": {
     "request_name": "role access",
     "pending_message": "Your request for {request_name} is pending administrator approval.",
