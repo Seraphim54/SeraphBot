@@ -234,10 +234,20 @@ class RolePicker(commands.Cog):
             
             return False
         
-        reaction, user = await self.bot.wait_for('reaction_add', check=check)
+        try:
+            reaction, user = await self.bot.wait_for('reaction_add', check=check, timeout=3600.0)
+        except asyncio.TimeoutError:
+            # No admin responded within the timeout period (1 hour)
+            await request_msg.edit(content="Request timed out - no admin response.")
+            await self._notify_user(member, "Your request timed out. Please contact an administrator.")
+            return
         
         # Remove all reactions from admin message after decision
-        await request_msg.clear_reactions()
+        try:
+            await request_msg.clear_reactions()
+        except (discord.Forbidden, discord.HTTPException) as e:
+            # Bot may lack 'Manage Messages' permission - log but continue
+            print(f"Warning: Failed to clear reactions from approval message: {e}")
         
         # Check if denied
         if self._emoji_matches(deny_emoji, reaction.emoji):
