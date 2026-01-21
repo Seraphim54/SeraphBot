@@ -197,7 +197,17 @@ class RolePicker(commands.Cog):
                 ) and
                 user.guild_permissions.administrator
             )
-        reaction, user = await self.bot.wait_for('reaction_add', check=check)
+        try:
+            reaction, user = await self.bot.wait_for('reaction_add', check=check, timeout=300)
+        except asyncio.TimeoutError:
+            # No admin responded in time; mark request as expired and notify user
+            try:
+                await request_msg.clear_reactions()
+                await request_msg.edit(content="Request expired: no admin response.")
+            except Exception:
+                pass
+            await self._notify_user(member, "Your D&D role request expired because no admin responded in time. Please try again later.")
+            return
         # Remove all reactions from admin message after decision
         await request_msg.clear_reactions()
         if hasattr(reaction.emoji, 'id') and str(reaction.emoji.id) == "858802171193327616":
