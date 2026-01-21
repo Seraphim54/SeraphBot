@@ -21,6 +21,5 @@
   ],
   "channel_id": 987654321098765432,
   "admin_channel_id": 123123123123123123,
-  "embed_title": "Choose Your Role!",
-  "embed_description": "React with an emoji below to be assigned a role."
+  "embed_title": "Choose Your Role!"
 }
