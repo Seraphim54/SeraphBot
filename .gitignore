@@ -215,3 +215,5 @@ archives/
 /data/**
 !/data/modular_event_template.json
 !/data/role_reactions_template.json
+!/data/role_reactions_dnd_example.json
+!/data/ADMIN_APPROVAL_CONFIG.md
