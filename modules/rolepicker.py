@@ -410,9 +410,12 @@ class RolePicker(commands.Cog):
                 break
 
     async def _notify_user(self, member, message):
+        """Attempt to send a DM to the user. Silently fails if user has DMs disabled or other send errors occur."""
         try:
             await member.send(message)
-        except Exception:
+        except (discord.Forbidden, discord.HTTPException, discord.NotFound):
+            # User has DMs disabled, the message cannot be sent, or the user object is invalid
+            # This is acceptable - we don't want to break the flow if DMs fail
             pass
 
 async def setup(bot):
