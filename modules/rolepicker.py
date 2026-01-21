@@ -24,8 +24,12 @@ class RolePicker(commands.Cog):
             }
             # Ensure the directory exists and create the config file
             os.makedirs(os.path.dirname(self.config_path), exist_ok=True)
-            with open(self.config_path, 'w', encoding='utf-8') as f:
-                json.dump(self.config, f, indent=2)
+            try:
+                with open(self.config_path, 'w', encoding='utf-8') as f:
+                    json.dump(self.config, f, indent=2)
+            except (IOError, OSError, PermissionError) as e:
+                # If file write fails during init, log but continue with in-memory config
+                logging.warning(f"Failed to create role picker configuration file: {e}")
         except json.JSONDecodeError:
             # Fall back to a safe default if the JSON is corrupted
             self.config = {
