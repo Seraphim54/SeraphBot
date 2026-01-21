@@ -1,21 +1,9 @@
 {
   "roles": [
     {
-      "emoji": "🧙",
+      "emoji": "🎲",
       "role_id": 123456789012345678,
-      "description": "Wizard",
-      "admin_approval": false
-    },
-    {
-      "emoji": "🛡️",
-      "role_id": 234567890123456789,
-      "description": "Paladin",
-      "admin_approval": true
-    },
-    {
-      "emoji": "🏹",
-      "role_id": 345678901234567890,
-      "description": "Ranger",
+      "description": "D&D Access (requires admin approval)",
       "admin_approval": true
     }
   ],
@@ -23,29 +11,27 @@
   "admin_channel_id": 123123123123123123,
   "embed_title": "Choose Your Role!",
   "embed_description": "React with an emoji below to be assigned a role.",
-  "color": "blurple"
   "admin_approval": {
-    "request_name": "role access",
+    "request_name": "D&D access",
     "pending_message": "Your request for {request_name} is pending administrator approval.",
-    "approval_prompt": "React below to approve with a specific role or Deny.",
+    "approval_prompt": "React below to approve as Player, Spectator, or Deny.",
     "deny_emoji": "❌",
     "denied_message": "Your {request_name} request was denied by an admin.",
     "approval_options": [
       {
-        "emoji": "<:emoji_name:123456789012345678>",
-        "role_id": 111111111111111111,
-        "label": "Option A",
+        "emoji": "<:DnD:858802171193327616>",
+        "role_id": 957848615173378108,
+        "label": "D&D Player",
         "approved_message": "Your request for {label} was approved!",
         "admin_confirmation": "Request approved as {label}."
       },
       {
-        "emoji": "<:emoji_name:987654321098765432>",
-        "role_id": 222222222222222222,
-        "label": "Option B",
+        "emoji": "<:dndspec:1462113193051553799>",
+        "role_id": 809223517949919272,
+        "label": "D&D Spectator",
         "approved_message": "Your request for {label} was approved!",
         "admin_confirmation": "Request approved as {label}."
       }
     ]
   }
-  "embed_title": "Choose Your Role!"
 }
