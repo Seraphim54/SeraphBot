@@ -110,6 +110,8 @@ class RolePicker(commands.Cog):
             return
         guild = self.bot.get_guild(payload.guild_id)
         member = guild.get_member(payload.user_id)
+        if member is None:
+            return
         role_entry = self._get_role_entry(payload.emoji)
         if not role_entry:
             return
