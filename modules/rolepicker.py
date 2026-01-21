@@ -10,6 +10,7 @@ class RolePicker(commands.Cog):
         self.config_path = os.path.join(os.path.dirname(__file__), '../data/role_reactions.json')
         self.load_config()
         self._bot_removing_reactions = set()  # (user_id, message_id, emoji_str)
+        self._reactions_lock = asyncio.Lock()  # Protect access to _bot_removing_reactions
 
     def load_config(self):
         with open(self.config_path, 'r', encoding='utf-8') as f:
@@ -61,7 +62,8 @@ class RolePicker(commands.Cog):
             channel = self.bot.get_channel(self.config['channel_id'])
             msg = await channel.fetch_message(self.config['message_id'])
             key = (member.id, msg.id, str(payload.emoji))
-            self._bot_removing_reactions.add(key)
+            async with self._reactions_lock:
+                self._bot_removing_reactions.add(key)
             await msg.remove_reaction(payload.emoji, member)
             # Start admin approval flow
             await self._handle_admin_approval(payload, member, role_entry, add=True)
@@ -75,16 +77,18 @@ class RolePicker(commands.Cog):
             channel = self.bot.get_channel(self.config['channel_id'])
             msg = await channel.fetch_message(self.config['message_id'])
             key = (member.id, msg.id, str(payload.emoji))
-            self._bot_removing_reactions.add(key)
+            async with self._reactions_lock:
+                self._bot_removing_reactions.add(key)
             await msg.remove_reaction(payload.emoji, member)
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
         # Prevent role removal if this was a bot-initiated reaction removal
         key = (payload.user_id, payload.message_id, str(payload.emoji))
-        if key in self._bot_removing_reactions:
-            self._bot_removing_reactions.remove(key)
-            return
+        async with self._reactions_lock:
+            if key in self._bot_removing_reactions:
+                self._bot_removing_reactions.remove(key)
+                return
         if not self._is_rolepicker_message(payload):
             return
         guild = self.bot.get_guild(payload.guild_id)
