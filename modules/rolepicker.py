@@ -175,9 +175,18 @@ class RolePicker(commands.Cog):
         request_msg = await admin_channel.send(embed=embed)
         player_emoji_str = "<:DnD:858802171193327616>"
         spectator_emoji_str = "<:dndspec:1462113193051553799>"
-        await request_msg.add_reaction(player_emoji_str)
-        await request_msg.add_reaction(spectator_emoji_str)
-        await request_msg.add_reaction("❌")  # Deny
+        try:
+            await request_msg.add_reaction(player_emoji_str)
+        except (discord.Forbidden, discord.HTTPException, discord.NotFound):
+            pass
+        try:
+            await request_msg.add_reaction(spectator_emoji_str)
+        except (discord.Forbidden, discord.HTTPException, discord.NotFound):
+            pass
+        try:
+            await request_msg.add_reaction("❌")  # Deny
+        except (discord.Forbidden, discord.HTTPException, discord.NotFound):
+            pass
         def check(reaction, user):
             return (
                 reaction.message.id == request_msg.id and
