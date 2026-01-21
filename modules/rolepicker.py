@@ -42,7 +42,10 @@ class RolePicker(commands.Cog):
     @commands.command()
     async def rolepicker(self, ctx):
         """Post the role picker embed with role descriptions."""
-        await ctx.message.delete()
+        try:
+            await ctx.message.delete()
+        except (discord.Forbidden, discord.HTTPException, discord.NotFound):
+            pass  # Bot lacks permissions or message already deleted
         # Build description listing all roles
         desc_lines = []
         for entry in self.config['roles']:
@@ -232,10 +235,18 @@ class RolePicker(commands.Cog):
                 user.guild_permissions.administrator
             )
         
-        reaction, user = await self.bot.wait_for('reaction_add', check=check)
+        try:
+            reaction, user = await self.bot.wait_for('reaction_add', check=check, timeout=43200)  # 12 hours
+        except asyncio.TimeoutError:
+            await request_msg.edit(content="Request timed out after 12 hours.")
+            await self._notify_user(member, "Your D&D role request timed out after 12 hours. Please request again if still needed.")
+            return
         
         # Remove all reactions from admin message after decision
-        await request_msg.clear_reactions()
+        try:
+            await request_msg.clear_reactions()
+        except (discord.Forbidden, discord.HTTPException):
+            pass  # Bot may lack permissions
         
         if hasattr(reaction.emoji, 'id') and str(reaction.emoji.id) == "858802171193327616":
             # Approve as Player
