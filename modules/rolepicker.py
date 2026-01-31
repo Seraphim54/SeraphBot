@@ -282,5 +282,185 @@ class RolePicker(commands.Cog):
             # This is acceptable - we don't want to break the flow if DMs fail
             pass
 
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def addrole(self, ctx, emoji: str, role: discord.Role, admin_approval: bool = False, *, description: str = None):
+        """
+        Add a new role to the rolepicker system and update the embed.
+        
+        Usage: !addrole <emoji> <@role> [admin_approval] [description]
+        Examples:
+            !addrole 🎮 @Gamer false Gaming enthusiasts
+            !addrole <:custom:123456> @VIP true VIP members (requires admin approval)
+        """
+        try:
+            await ctx.message.delete()
+        except (discord.Forbidden, discord.HTTPException, discord.NotFound):
+            pass
+        
+        # Check if role already exists
+        for entry in self.config['roles']:
+            if entry['role_id'] == role.id:
+                await ctx.send(f"❌ Role {role.mention} is already in the rolepicker!", delete_after=10)
+                return
+        
+        # Use role name as description if not provided
+        if description is None:
+            description = role.name
+        
+        # Add new role entry
+        new_entry = {
+            "emoji": emoji,
+            "role_id": role.id,
+            "description": description,
+            "admin_approval": admin_approval
+        }
+        self.config['roles'].append(new_entry)
+        
+        # Save config
+        try:
+            with open(self.config_path, 'w', encoding='utf-8') as f:
+                json.dump(self.config, f, indent=2)
+        except (IOError, OSError, PermissionError) as e:
+            await ctx.send(f"❌ Failed to save configuration: {e}", delete_after=10)
+            return
+        
+        # Update the embed if it exists
+        if 'message_id' in self.config and 'channel_id' in self.config:
+            await self._update_rolepicker_embed(ctx)
+            approval_text = " (requires admin approval)" if admin_approval else ""
+            await ctx.send(f"✅ Added {emoji} {role.mention} to rolepicker{approval_text}!", delete_after=10)
+        else:
+            await ctx.send(f"✅ Added {emoji} {role.mention} to config. Use `!rolepicker` to post the embed.", delete_after=10)
+
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def removerole(self, ctx, *, identifier: str):
+        """
+        Remove a role from the rolepicker system and update the embed.
+        
+        Usage: !removerole <role_mention_or_emoji>
+        Examples:
+            !removerole @Gamer
+            !removerole 🎮
+        """
+        try:
+            await ctx.message.delete()
+        except (discord.Forbidden, discord.HTTPException, discord.NotFound):
+            pass
+        
+        # Try to find role by mention or emoji
+        removed = False
+        for i, entry in enumerate(self.config['roles']):
+            # Check if identifier matches emoji
+            if entry['emoji'] == identifier or entry['emoji'] in identifier:
+                self.config['roles'].pop(i)
+                removed = True
+                break
+            # Check if identifier is a role mention or ID
+            try:
+                role_id = int(identifier.strip('<@&>'))
+                if entry['role_id'] == role_id:
+                    self.config['roles'].pop(i)
+                    removed = True
+                    break
+            except ValueError:
+                pass
+        
+        if not removed:
+            await ctx.send(f"❌ Could not find a role matching `{identifier}` in the rolepicker!", delete_after=10)
+            return
+        
+        # Save config
+        try:
+            with open(self.config_path, 'w', encoding='utf-8') as f:
+                json.dump(self.config, f, indent=2)
+        except (IOError, OSError, PermissionError) as e:
+            await ctx.send(f"❌ Failed to save configuration: {e}", delete_after=10)
+            return
+        
+        # Update the embed if it exists
+        if 'message_id' in self.config and 'channel_id' in self.config:
+            await self._update_rolepicker_embed(ctx)
+            await ctx.send(f"✅ Removed role from rolepicker!", delete_after=10)
+        else:
+            await ctx.send(f"✅ Removed role from config.", delete_after=10)
+
+    @commands.command()
+    @commands.has_permissions(administrator=True)
+    async def updaterolepicker(self, ctx):
+        """
+        Manually refresh the rolepicker embed with current configuration.
+        Useful after editing role_reactions.json manually.
+        """
+        try:
+            await ctx.message.delete()
+        except (discord.Forbidden, discord.HTTPException, discord.NotFound):
+            pass
+        
+        if 'message_id' not in self.config or 'channel_id' not in self.config:
+            await ctx.send("❌ No rolepicker message found. Use `!rolepicker` first!", delete_after=10)
+            return
+        
+        # Reload config from file in case it was edited manually
+        self.load_config()
+        
+        await self._update_rolepicker_embed(ctx)
+        await ctx.send("✅ Rolepicker embed updated!", delete_after=10)
+
+    async def _update_rolepicker_embed(self, ctx):
+        """Update the existing rolepicker message with current config."""
+        try:
+            channel = self.bot.get_channel(self.config['channel_id'])
+            if not channel:
+                await ctx.send("❌ Rolepicker channel not found!", delete_after=10)
+                return
+            
+            message = await channel.fetch_message(self.config['message_id'])
+            if not message:
+                await ctx.send("❌ Rolepicker message not found!", delete_after=10)
+                return
+            
+            # Build description listing all roles
+            desc_lines = []
+            for entry in self.config['roles']:
+                approval = " (Admin Approval Required)" if entry.get('admin_approval') else ""
+                desc_lines.append(f"{entry['emoji']} — {entry['description']}{approval}")
+            description = "\n".join(desc_lines)
+            
+            # Determine color following the pattern from events module
+            if "color" in self.config and hasattr(discord.Color, self.config["color"]):
+                color_value = getattr(discord.Color, self.config["color"])()
+            else:
+                color_value = get_random_color()
+            
+            embed = discord.Embed(
+                title=self.config.get('embed_title', 'Pick Your Role!'),
+                description=description,
+                color=color_value
+            )
+            if 'embed_image' in self.config:
+                embed.set_image(url=self.config['embed_image'])
+            if 'embed_footer' in self.config:
+                embed.set_footer(text=self.config['embed_footer'])
+            
+            await message.edit(embed=embed)
+            
+            # Clear and re-add all reactions
+            try:
+                await message.clear_reactions()
+            except (discord.Forbidden, discord.HTTPException):
+                pass  # Bot may lack permissions
+            
+            for entry in self.config['roles']:
+                try:
+                    await message.add_reaction(entry['emoji'])
+                except (discord.Forbidden, discord.HTTPException, discord.NotFound):
+                    # Ignore failures to add reactions (invalid emoji, missing permissions, etc.)
+                    pass
+        
+        except (discord.NotFound, discord.HTTPException) as e:
+            await ctx.send(f"❌ Failed to update rolepicker: {e}", delete_after=10)
+
 async def setup(bot):
     await bot.add_cog(RolePicker(bot))
