@@ -11,7 +11,7 @@ load_dotenv()
 TOKEN = os.getenv("bot_token")
 
 # Create a bot with a prefix for commands
-bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
+bot = commands.Bot(command_prefix="!", intents=discord.Intents.all(), help_command=None)
 
 # +----------------------+
 # |  LISTS, TUPLES, ETC  |
@@ -51,6 +51,7 @@ if __name__ == "__main__":
         await bot.load_extension("modules.admin")
         await bot.load_extension("modules.events")
         await bot.load_extension("modules.rolepicker")
+        await bot.load_extension("modules.help")
         await bot.start(TOKEN)
 
     asyncio.run(main())
