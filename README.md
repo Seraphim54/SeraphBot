@@ -7,6 +7,7 @@ A Discord bot built with discord.py, focused on D&D/TTRPG utilities and modular 
 - 📢 JSON-driven event announcements
 - 🎮 Fun commands and utilities
 - 🛡️ Admin approval system for restricted roles
+- 📚 **JSON-configured help system** with role-based permissions
 
 ## Setup
 
@@ -25,6 +26,55 @@ A Discord bot built with discord.py, focused on D&D/TTRPG utilities and modular 
 4. Run the bot: `python bot.py`
 
 ## Commands
+
+### 📚 Getting Help
+
+- **`!help`** - Interactive help system (DM-based)
+  - Dynamically loaded from `data/help_config.json`
+  - Role-aware command filtering based on JSON configuration
+  - Checks for minimum role requirement before access
+  - Admin permissions verified via role IDs or user IDs
+  - Interactive menu with numbered options
+  - Shows detailed usage and examples for each command
+  - 5-minute session timeout with countdown
+  - Example: `!help`
+
+- **`!reloadhelp`** - Reload help configuration (Admin only)
+  - Reloads the help system from JSON without restarting bot
+  - Useful after editing `data/help_config.json`
+  - Example: `!reloadhelp`
+
+#### Help Configuration
+The help system is configured via `data/help_config.json`:
+```json
+{
+  "permissions": {
+    "minimum_role_id": 742042536779972720,
+    "minimum_role_name": "member",
+    "admin_role_ids": [723260697840353434],
+    "admin_user_ids": []
+  },
+  "settings": {
+    "timeout_duration": 300,
+    "dm_only": true
+  },
+  "commands": {
+    "command_name": {
+      "category": "Category Name",
+      "description": "Command description",
+      "usage": "!command <args>",
+      "example": "!command example",
+      "requires_admin": false
+    }
+  }
+}
+```
+
+**Permission System:**
+- `minimum_role_id`: Users must have this role to use ANY bot commands
+- `admin_role_ids`: Array of role IDs that grant admin command access
+- `admin_user_ids`: Array of user IDs that grant admin command access
+- Users with Discord's Administrator permission always have admin access
 
 ### 🎲 Rolls (D&D Utilities)
 Commands for tabletop gaming.
