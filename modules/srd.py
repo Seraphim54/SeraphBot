@@ -1,5 +1,6 @@
-import requests
+import discord
 from discord.ext import commands
+import requests
 
 DND_API = "https://www.dnd5eapi.co/api/spells/"
 
