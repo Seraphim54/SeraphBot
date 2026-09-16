@@ -1,8 +1,6 @@
 import discord
 from discord.ext import commands
 import requests
-import logging
-
 
 DND_API = "https://www.dnd5eapi.co/api/spells/"
 
@@ -15,8 +13,7 @@ class SRD(commands.Cog):
         url = DND_API + spell_name
         r = requests.get(url)
 
-        logging.basicConfig(level=logging.INFO)
-        logging.info(f"Fetching: {url} Status: {r.status_code}")
+        print("Fetching:", url, "Status:", r.status_code, flush=True)
 
         if r.status_code != 200:
             return None
