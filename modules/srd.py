@@ -9,11 +9,13 @@ class SRD(commands.Cog):
         self.bot = bot
 
     def get_spell_info(self, spell_name: str):
-        spell_name = spell_name.lower().replace(" ", "-")
-        url = DND_API + spell_name
+        # Format input (e.g., "Magic Missile" -> "magic-missile")
+        spell_slug = spell_name.lower().strip().replace(" ", "-")
+        url = DND_API + spell_slug
+        
+        print(f"Fetching API URL: {url}", flush=True)
         r = requests.get(url)
-
-        print("Fetching:", url, "Status:", r.status_code, flush=True)
+        print(f"API Response Status: {r.status_code}", flush=True)
 
         if r.status_code != 200:
             return None
@@ -31,15 +33,17 @@ class SRD(commands.Cog):
 
     @commands.command(name="ask")
     async def ask(self, ctx, *, question: str):
-        await ctx.trigger_typing()
+        # Corrected modern async context manager syntax for discord.py v2.0+
+        async with ctx.typing():
+            print(f"User asked for spell: '{question}'", flush=True)
 
-        # Try each word in the question as a spell name
-        for word in question.lower().split():
-            spell = self.get_spell_info(word)
+            # Look up the entire user input directly as a single spell name
+            spell = self.get_spell_info(question)
+            
             if spell:
                 embed = discord.Embed(
                     title=f"{spell['name']} (Level {spell['level']} {spell['school']})",
-                    description=spell['desc'],
+                    description=spell['desc'][:2000],  # Keeps it safe under Discord's 2048 limit
                     color=discord.Color.blue()
                 )
                 embed.add_field(name="Casting Time", value=spell["casting_time"], inline=True)
@@ -49,7 +53,7 @@ class SRD(commands.Cog):
                 await ctx.send(embed=embed)
                 return
 
-        await ctx.send("I couldn't find a spell matching your question.")
+            await ctx.send(f"I couldn't find a spell matching '{question}'. Make sure you typed the exact name.")
 
     @commands.command(name="testembed")
     async def testembed(self, ctx):
