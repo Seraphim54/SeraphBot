@@ -30,7 +30,6 @@ class SRD(commands.Cog):
     async def ask(self, ctx, *, question: str):
         await ctx.trigger_typing()
 
-        # Try to detect a spell name in the question
         words = question.lower().split()
         for w in words:
             spell = self.get_spell_info(w)
@@ -45,5 +44,8 @@ class SRD(commands.Cog):
                 await ctx.send(response)
                 return
 
-        # No spell found
         await ctx.send("I couldn't find a spell matching your question.")
+
+# REQUIRED for discord.py 2.x
+async def setup(bot):
+    await bot.add_cog(SRD(bot))
