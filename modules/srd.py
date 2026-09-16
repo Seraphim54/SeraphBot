@@ -31,8 +31,8 @@ class SRD(commands.Cog):
             "desc": "\n".join(data.get("desc", []))
         }
 
-    @commands.command(name="ask")
-    async def ask(self, ctx, *, question: str):
+    @commands.command(name="spell")
+    async def spell(self, ctx, *, question: str):
         # Corrected modern async context manager syntax for discord.py v2.0+
         async with ctx.typing():
             print(f"User asked for spell: '{question}'", flush=True)
