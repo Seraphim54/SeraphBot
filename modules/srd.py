@@ -9,7 +9,6 @@ class SRD(commands.Cog):
     @commands.command(name="ask")
     async def ask(self, ctx, *, question: str):
         print("ASK COMMAND FIRED:", question)
-        """Ask The Sixth Wing for SRD spell or rules information."""
         await ctx.trigger_typing()
 
         try:
@@ -33,7 +32,6 @@ class SRD(commands.Cog):
                         f"🜂 **The Sixth Wing descends in radiant light…**\n"
                         f"{answer}"
                     )
-
 
         except Exception as e:
             await ctx.send(f"⚠️ An error occurred: `{e}`")
