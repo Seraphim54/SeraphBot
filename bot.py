@@ -52,6 +52,7 @@ if __name__ == "__main__":
         await bot.load_extension("modules.events")
         await bot.load_extension("modules.rolepicker")
         await bot.load_extension("modules.help")
+        await bot.load_extension("modules.srd")
         await bot.start(TOKEN)
 
     asyncio.run(main())
