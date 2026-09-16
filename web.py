@@ -1,5 +1,6 @@
 from fastapi import FastAPI
-from bot import run_bot
+import threading
+import bot
 
 app = FastAPI()
 
@@ -11,6 +12,10 @@ def root():
 def health():
     return {"ok": True}
 
+def start_bot():
+    bot.run_bot()
+
 @app.on_event("startup")
 async def startup_event():
-    run_bot()
+    thread = threading.Thread(target=start_bot)
+    thread.start()

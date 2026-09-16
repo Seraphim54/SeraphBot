@@ -44,7 +44,20 @@ async def colortest(ctx):
 # |  LOAD EXTENSIONS  |
 # +-------------------+
 
-if __name__ == "__main__":
+#if __name__ == "__main__":
+#    async def main():
+#        await bot.load_extension("modules.fun")
+#        await bot.load_extension("modules.rolls")
+#        await bot.load_extension("modules.admin")
+#        await bot.load_extension("modules.events")
+#        await bot.load_extension("modules.rolepicker")
+#        await bot.load_extension("modules.help")
+#        await bot.load_extension("modules.srd")
+#        await bot.start(TOKEN)
+#
+#    asyncio.run(main())
+
+def run_bot():
     async def main():
         await bot.load_extension("modules.fun")
         await bot.load_extension("modules.rolls")
@@ -56,3 +69,4 @@ if __name__ == "__main__":
         await bot.start(TOKEN)
 
     asyncio.run(main())
+
