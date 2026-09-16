@@ -47,6 +47,15 @@ class SRD(commands.Cog):
 
         await ctx.send("I couldn't find a spell matching your question.")
 
+    @commands.command()
+    async def testembed(self, ctx):
+        embed = discord.Embed(
+            title="Embed Test",
+            description="If you see this, embeds work.",
+            color=discord.Color.blue()
+        )
+        await ctx.send(embed=embed)
+        
 # REQUIRED for discord.py 2.x
 async def setup(bot):
     await bot.add_cog(SRD(bot))
