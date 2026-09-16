@@ -2,12 +2,12 @@
 import discord
 from discord.ext import commands
 import os
-from dotenv import load_dotenv
+#from dotenv import load_dotenv
 import random
 import json
 import asyncio
 # Loads the Bots Token from .env file
-load_dotenv()
+#load_dotenv()
 TOKEN = os.getenv("bot_token")
 
 # Create a bot with a prefix for commands
