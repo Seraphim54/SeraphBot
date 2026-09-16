@@ -29,6 +29,7 @@ class SRD(commands.Cog):
 
     @commands.command(name="ask")
     async def ask(self, ctx, *, question: str):
+        print("ASK COMMAND FIRED:", question)
         await ctx.trigger_typing()
 
         words = question.lower().split()
@@ -45,17 +46,17 @@ class SRD(commands.Cog):
                 await ctx.send(response)
                 return
 
-        await ctx.send("I couldn't find a spell matching your question.")
+                    data = await resp.json()
+                    answer = data.get("response", "⚠️ No response returned from the agent.")
 
-    @commands.command()
-    async def testembed(self, ctx):
-        embed = discord.Embed(
-            title="Embed Test",
-            description="If you see this, embeds work.",
-            color=discord.Color.blue()
-        )
-        await ctx.send(embed=embed)
-        
-# REQUIRED for discord.py 2.x
+                    await ctx.send(
+                        f"🜂 **The Sixth Wing descends in radiant light…**\n"
+                        f"{answer}"
+                    )
+
+        except Exception as e:
+            await ctx.send(f"⚠️ An error occurred: `{e}`")
+
 async def setup(bot):
+    print("SRD COG LOADED")
     await bot.add_cog(SRD(bot))
