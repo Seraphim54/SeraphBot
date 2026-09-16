@@ -13,6 +13,8 @@ class SRD(commands.Cog):
         url = DND_API + spell_name
         r = requests.get(url)
 
+        print("Fetching:", url, "Status:", r.status_code)
+
         if r.status_code != 200:
             return None
 
