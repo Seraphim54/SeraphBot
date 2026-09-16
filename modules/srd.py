@@ -7,7 +7,8 @@ class SRD(commands.Cog):
         self.bot = bot
 
     @commands.command(name="ask")
-    async def ask_srd(self, ctx, *, question: str):
+    async def ask(self, ctx, *, question: str):
+        print("ASK COMMAND FIRED:", question)
         """Ask The Sixth Wing for SRD spell or rules information."""
         await ctx.trigger_typing()
 
