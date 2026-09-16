@@ -39,4 +39,5 @@ class SRD(commands.Cog):
             await ctx.send(f"⚠️ An error occurred: `{e}`")
 
 async def setup(bot):
+    print("SRD COG LOADED")
     await bot.add_cog(SRD(bot))
