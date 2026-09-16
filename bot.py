@@ -1,22 +1,35 @@
-
 import discord
 from discord.ext import commands
 import os
-#from dotenv import load_dotenv
 import random
 import json
 import asyncio
-# Loads the Bots Token from .env file
-#load_dotenv()
+from modules.utils import disc_colors
+
+# Retrieve the token from Render environment variables
 TOKEN = os.getenv("bot_token")
 
 # Create a bot with a prefix for commands
 bot = commands.Bot(command_prefix="!", intents=discord.Intents.all(), help_command=None)
 
-# +----------------------+
-# |  LISTS, TUPLES, ETC  |
-# +----------------------+
-from modules.utils import disc_colors
+# +------------------------+
+# |  EXTENSION SETUP HOOK  |
+# +------------------------+
+# This special discord.py function automatically runs inside FastAPI's 
+# async loop BEFORE the bot connects, loading your commands cleanly.
+async def custom_setup_hook():
+    print("🤖 Starting to load bot extensions...", flush=True)
+    await bot.load_extension("modules.fun")
+    await bot.load_extension("modules.rolls")
+    await bot.load_extension("modules.admin")
+    await bot.load_extension("modules.events")
+    await bot.load_extension("modules.rolepicker")
+    await bot.load_extension("modules.help")
+    await bot.load_extension("modules.srd")
+    print("✅ All extensions successfully attached to the setup hook!", flush=True)
+
+# Attach the setup function directly to the bot instance
+bot.setup_hook = custom_setup_hook
 
 # +--------------+
 # |  BOT EVENTS  |
@@ -24,7 +37,7 @@ from modules.utils import disc_colors
 
 @bot.event
 async def on_ready():
-    print(f"✅ Logged in as {bot.user}")
+    print(f"✅ Logged in as {bot.user}", flush=True)
 
 
 # +----------------+
@@ -39,34 +52,3 @@ async def hello2(ctx):
 @bot.command()
 async def colortest(ctx):
     await ctx.send(f"The color choices are {disc_colors}")
-
-# +-------------------+
-# |  LOAD EXTENSIONS  |
-# +-------------------+
-
-#if __name__ == "__main__":
-#    async def main():
-#        await bot.load_extension("modules.fun")
-#        await bot.load_extension("modules.rolls")
-#        await bot.load_extension("modules.admin")
-#        await bot.load_extension("modules.events")
-#        await bot.load_extension("modules.rolepicker")
-#        await bot.load_extension("modules.help")
-#        await bot.load_extension("modules.srd")
-#        await bot.start(TOKEN)
-#
-#    asyncio.run(main())
-
-def run_bot():
-    async def main():
-        await bot.load_extension("modules.fun")
-        await bot.load_extension("modules.rolls")
-        await bot.load_extension("modules.admin")
-        await bot.load_extension("modules.events")
-        await bot.load_extension("modules.rolepicker")
-        await bot.load_extension("modules.help")
-        await bot.load_extension("modules.srd")
-        await bot.start(TOKEN)
-
-    asyncio.run(main())
-
