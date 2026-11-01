@@ -34,7 +34,7 @@ class SRD(commands.Cog):
     @commands.command(name="spell")
     async def spell(self, ctx, *, question: str):
         # Corrected modern async context manager syntax for discord.py v2.0+
-        async with ctx.typing():
+        #async with ctx.typing():
             print(f"User asked for spell: '{question}'", flush=True)
 
             # Look up the entire user input directly as a single spell name
